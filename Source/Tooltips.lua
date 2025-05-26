@@ -3,11 +3,28 @@ local TooltipHandlers = {}
 local ShowTooltip = function(tooltip, itemLink)
 	if itemLink then
 		local itemID = tonumber(string.match(itemLink, "item:(%d+)"))
+		local itemCount = InventorixService:GetItemCount(itemID)
 
-		for playerName, itemCount in pairs(InventorixService:GetItemCount(itemID)) do
-			tooltip:AddLine(playerName .. ": " .. itemCount, 1, 1, 1)
-			tooltip:Show()
+		local players = {}
+		for name, count in pairs(itemCount.players) do
+			table.insert(players, {name, count})
 		end
+
+		table.sort(players, function(a, b) return a[1] < b[1] end)
+
+		for i = 1, #players, 2 do
+			local textLeft = players[i][1] .. " " .. WHITE_FONT_COLOR:WrapTextInColorCode(players[i][2])
+			local textRight = players[i + 1] and players[i + 1][1] .. " " .. WHITE_FONT_COLOR:WrapTextInColorCode(players[i + 1][2]) or ""
+
+			tooltip:AddDoubleLine(textLeft, textRight)
+		end
+
+		tooltip:AddDoubleLine(
+			"Warband " .. WHITE_FONT_COLOR:WrapTextInColorCode(itemCount.warband),
+			"Total " .. WHITE_FONT_COLOR:WrapTextInColorCode(itemCount.total)
+		)
+
+		tooltip:Show()
 	end
 end
 

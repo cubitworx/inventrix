@@ -11,22 +11,23 @@ local updateContainerDebounce = {}
 
 function InventorixService:GetItemCount(itemID)
 	local itemCount = {
-		Warband = 0,
-		Total = 0,
+		players = {},
+		total = 0,
+		warband = 0,
 	}
 
 	for _, items in pairs(self.accountItems) do
 		if items[itemID] then
-			itemCount.Warband = itemCount.Warband + items[itemID]
-			itemCount.Total = itemCount.Total + items[itemID]
+			itemCount.warband = itemCount.warband + items[itemID]
+			itemCount.total = itemCount.total + items[itemID]
 		end
 	end
 
 	for playerName, containers in pairs(self.playerItems) do
 		for _, items in pairs(containers) do
 			if items[itemID] then
-				itemCount[playerName] = (itemCount[playerName] or 0) + items[itemID]
-				itemCount.Total = itemCount.Total + items[itemID]
+				itemCount.players[playerName] = (itemCount.players[playerName] or 0) + items[itemID]
+				itemCount.total = itemCount.total + items[itemID]
 			end
 		end
 	end
