@@ -1,0 +1,9 @@
+## Interface: 110105
+## Title: Inventorix
+## Notes: A lightweight addon that keeps track of what items you own across all characters
+## Author: Ademeer
+## Version: 11.1.0
+## Category-enUS: Bags & Inventory
+## SavedVariables: INVENTORIX_ACCOUNT_ITEM_STORE, INVENTORIX_PLAYER_ITEM_STORE
+
+Source\Manifest.xml
