@@ -29,7 +29,7 @@ TooltipHandlers["GetBuybackItem"] = function(tooltip, slotIndex)
 	ShowTooltip(tooltip, itemLink)
 end
 
-TooltipHandlers["SetHyperlink"] = function (tooltip, itemLink)
+TooltipHandlers["GetHyperlink"] = function (tooltip, itemLink)
 	ShowTooltip(tooltip, itemLink)
 end
 
@@ -41,17 +41,14 @@ TooltipHandlers["GetInventoryItem"] = function(tooltip, unit, slot)
 end
 
 TooltipHandlers["GetItemKey"] = function(tooltip, itemID, itemLevel, itemSuffix)
-	local itemLink
 	local info = C_TooltipInfo and C_TooltipInfo.GetItemKey(itemID, itemLevel, itemSuffix)
 
-	if info == nil then
-		return
-	end
+	if info then
+		local itemLink = info.hyperlink
 
-	itemLink = info.hyperlink
-
-	if itemLink then
-		ShowTooltip(tooltip, itemLink)
+		if itemLink then
+			ShowTooltip(tooltip, itemLink)
+		end
 	end
 end
 
@@ -62,30 +59,57 @@ TooltipHandlers["GetMerchantItem"] = function(tooltip, index)
 	ShowTooltip(tooltip, itemLink)
 end
 
-if TooltipDataProcessor then
-	local function ValidateTooltip(tooltip)
-		return tooltip == GameTooltip
-			or tooltip == GameTooltipTooltip
-			or tooltip == ItemRefTooltip
-			or tooltip == GarrisonShipyardMapMissionTooltipTooltip
-			or (not tooltip:IsForbidden()
-				and (tooltip:GetName() or ""):match("^NotGameTooltip"))
+TooltipHandlers["GetRecipeReagentItem"] = function(tooltip, recipeID, slotID )
+	local itemLink = C_TradeSkillUI.GetRecipeFixedReagentItemLink(recipeID, slotID)
+
+	local recipeLevel
+	if ProfessionsFrame.CraftingPage:IsVisible() then
+		recipeLevel = ProfessionsFrame.CraftingPage.SchematicForm:GetCurrentRecipeLevel()
+	elseif ProfessionsFrame.OrdersPage:IsVisible() then
+		recipeLevel =  ProfessionsFrame.OrdersPage.OrderView.OrderDetails.SchematicForm:GetCurrentRecipeLevel()
 	end
 
-	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip)
-		if ValidateTooltip(tooltip) then
-			local info = tooltip.info or tooltip.processingInfo
-			if not info or not info.getterName or info.excludeLines then
-				return
-			end
+	local schematic = C_TradeSkillUI.GetRecipeSchematic(recipeID, false, recipeLevel)
 
-			if TooltipHandlers[info.getterName] == nil then
-				print(info.getterName)
-			end
-			local handler = TooltipHandlers[info.getterName]
-			if handler then
-				handler(tooltip, unpack(info.getterArgs))
-			end
+	for _, reagentSlotSchematic in ipairs(schematic.reagentSlotSchematics) do
+		if reagentSlotSchematic.dataSlotIndex == slotID then
+			ShowTooltip(tooltip, itemLink)
+			break
 		end
-	end)
+	end
 end
+
+TooltipHandlers["GetRecipeResultItem"] = function(tooltip, recipeID, reagents, allocations, _, qualityID)
+	local outputInfo = C_TradeSkillUI.GetRecipeOutputItemData(recipeID, reagents, allocations, qualityID)
+	local itemLink = outputInfo and outputInfo.hyperlink
+
+	if itemLink then
+		ShowTooltip(tooltip, itemLink)
+	end
+end
+
+local function ValidateTooltip(tooltip)
+	return tooltip == GameTooltip
+		or tooltip == GameTooltipTooltip
+		or tooltip == ItemRefTooltip
+		or tooltip == GarrisonShipyardMapMissionTooltipTooltip
+		or (not tooltip:IsForbidden()
+			and (tooltip:GetName() or ""):match("^NotGameTooltip"))
+end
+
+TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip)
+	if ValidateTooltip(tooltip) then
+		local info = tooltip.info or tooltip.processingInfo
+		if not info or not info.getterName or info.excludeLines then
+			return
+		end
+
+		-- if TooltipHandlers[info.getterName] == nil then
+		-- 	print(info.getterName)
+		-- end
+		local handler = TooltipHandlers[info.getterName]
+		if handler then
+			handler(tooltip, unpack(info.getterArgs))
+		end
+	end
+end)

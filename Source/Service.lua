@@ -1,10 +1,8 @@
 local playerName = UnitName("player")
 
 InventorixService = {
-	accountItems = INVENTORIX_ACCOUNT_ITEM_STORE or {},
-	playerItems = INVENTORIX_PLAYER_ITEM_STORE or {
-		[playerName] = {},
-	},
+	accountItems = {},
+	playerItems = {},
 	playerName = playerName,
 }
 
@@ -36,6 +34,12 @@ function InventorixService:GetItemCount(itemID)
 	return itemCount
 end
 
+function InventorixService:Init()
+	self.accountItems = INVENTORIX_ACCOUNT_ITEM_STORE or {}
+	self.playerItems = INVENTORIX_PLAYER_ITEM_STORE or {}
+	self.playerItems[playerName] = self.playerItems[playerName] or {}
+end
+
 function InventorixService:PrintInventoryItem(containerIndex, slotIndex)
 	local itemInfo = C_Container.GetContainerItemInfo(containerIndex, slotIndex)
 	print(containerIndex, slotIndex, itemInfo.itemID or "no-id", itemInfo.stackCount or "no-count")
@@ -45,7 +49,8 @@ function InventorixService:Save()
 	if not saveDebounce then
 		saveDebounce = true
 		C_Timer.After(5, function()
-			INVENTORIX_ITEM_STORE = InventorixService.playerItems
+			INVENTORIX_ACCOUNT_ITEM_STORE = InventorixService.accountItems
+			INVENTORIX_PLAYER_ITEM_STORE = InventorixService.playerItems
 			saveDebounce = false
 		end)
 	end
