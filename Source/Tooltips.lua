@@ -1,27 +1,42 @@
 local TooltipHandlers = {}
 
+local labelColor = FRAMESTACK_FRAME_COLOR
+local valueColor = WHITE_FONT_COLOR
+
+local TooltipPlayerCount = function(player, itemCount)
+	local classColor = C_ClassColor.GetClassColor(player.classFilename)
+
+	return classColor:WrapTextInColorCode(player.playerName)
+		.. " " .. valueColor:WrapTextInColorCode(itemCount)
+end
+
 local ShowTooltip = function(tooltip, itemLink)
 	if itemLink then
-		local itemID = tonumber(string.match(itemLink, "item:(%d+)"))
-		local itemCount = InventorixService:GetItemCount(itemID)
+		local itemId = tonumber(string.match(itemLink, "item:(%d+)"))
+		local totalCount = 0
 
-		local players = {}
-		for name, count in pairs(itemCount.players) do
-			table.insert(players, {name, count})
-		end
+		tooltip:AddLine(" ")
 
-		table.sort(players, function(a, b) return a[1] < b[1] end)
-
+		-- Add player & count to tooltip
+		local players = InventorixPlayerRegistry.players
 		for i = 1, #players, 2 do
-			local textLeft = players[i][1] .. " " .. WHITE_FONT_COLOR:WrapTextInColorCode(players[i][2])
-			local textRight = players[i + 1] and players[i + 1][1] .. " " .. WHITE_FONT_COLOR:WrapTextInColorCode(players[i + 1][2]) or ""
+			local player1 = players[i]
+			local player2 = players[i + 1]
+			local itemCount1 = InventorixInventory:GetItemCountForPlayer(player1, itemId)
+			local itemCount2 = player2 and InventorixInventory:GetItemCountForPlayer(player2, itemId)
+			local leftText = TooltipPlayerCount(player1, itemCount1)
+			local rightText = player2 and TooltipPlayerCount(player2, itemCount2) or ""
+			totalCount = totalCount + itemCount1 + (itemCount2 or 0)
 
-			tooltip:AddDoubleLine(textLeft, textRight)
+			tooltip:AddDoubleLine(leftText, rightText)
 		end
 
+		local warbandCount = InventorixInventory:GetItemCountWarband(itemId)
+		totalCount = totalCount + warbandCount
+		-- Add warband & total to tooltip
 		tooltip:AddDoubleLine(
-			"Warband " .. WHITE_FONT_COLOR:WrapTextInColorCode(itemCount.warband),
-			"Total " .. WHITE_FONT_COLOR:WrapTextInColorCode(itemCount.total)
+			labelColor:WrapTextInColorCode("Warband ") .. valueColor:WrapTextInColorCode(warbandCount),
+			labelColor:WrapTextInColorCode("Total ") .. valueColor:WrapTextInColorCode(totalCount)
 		)
 
 		tooltip:Show()
@@ -57,8 +72,8 @@ TooltipHandlers["GetInventoryItem"] = function(tooltip, unit, slot)
 	ShowTooltip(tooltip, itemLink)
 end
 
-TooltipHandlers["GetItemKey"] = function(tooltip, itemID, itemLevel, itemSuffix)
-	local info = C_TooltipInfo and C_TooltipInfo.GetItemKey(itemID, itemLevel, itemSuffix)
+TooltipHandlers["GetItemKey"] = function(tooltip, itemId, itemLevel, itemSuffix)
+	local info = C_TooltipInfo and C_TooltipInfo.GetItemKey(itemId, itemLevel, itemSuffix)
 
 	if info then
 		local itemLink = info.hyperlink
@@ -76,8 +91,8 @@ TooltipHandlers["GetMerchantItem"] = function(tooltip, index)
 	ShowTooltip(tooltip, itemLink)
 end
 
-TooltipHandlers["GetRecipeReagentItem"] = function(tooltip, recipeID, slotID )
-	local itemLink = C_TradeSkillUI.GetRecipeFixedReagentItemLink(recipeID, slotID)
+TooltipHandlers["GetRecipeReagentItem"] = function(tooltip, recipeId, slotId )
+	local itemLink = C_TradeSkillUI.GetRecipeFixedReagentItemLink(recipeId, slotId)
 
 	local recipeLevel
 	if ProfessionsFrame.CraftingPage:IsVisible() then
@@ -86,18 +101,18 @@ TooltipHandlers["GetRecipeReagentItem"] = function(tooltip, recipeID, slotID )
 		recipeLevel =  ProfessionsFrame.OrdersPage.OrderView.OrderDetails.SchematicForm:GetCurrentRecipeLevel()
 	end
 
-	local schematic = C_TradeSkillUI.GetRecipeSchematic(recipeID, false, recipeLevel)
+	local schematic = C_TradeSkillUI.GetRecipeSchematic(recipeId, false, recipeLevel)
 
 	for _, reagentSlotSchematic in ipairs(schematic.reagentSlotSchematics) do
-		if reagentSlotSchematic.dataSlotIndex == slotID then
+		if reagentSlotSchematic.dataSlotIndex == slotId then
 			ShowTooltip(tooltip, itemLink)
 			break
 		end
 	end
 end
 
-TooltipHandlers["GetRecipeResultItem"] = function(tooltip, recipeID, reagents, allocations, _, qualityID)
-	local outputInfo = C_TradeSkillUI.GetRecipeOutputItemData(recipeID, reagents, allocations, qualityID)
+TooltipHandlers["GetRecipeResultItem"] = function(tooltip, recipeId, reagents, allocations, _, qualityId)
+	local outputInfo = C_TradeSkillUI.GetRecipeOutputItemData(recipeId, reagents, allocations, qualityId)
 	local itemLink = outputInfo and outputInfo.hyperlink
 
 	if itemLink then
@@ -117,16 +132,14 @@ end
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip)
 	if ValidateTooltip(tooltip) then
 		local info = tooltip.info or tooltip.processingInfo
-		if not info or not info.getterName or info.excludeLines then
-			return
-		end
-
-		-- if TooltipHandlers[info.getterName] == nil then
-		-- 	print(info.getterName)
-		-- end
-		local handler = TooltipHandlers[info.getterName]
-		if handler then
-			handler(tooltip, unpack(info.getterArgs))
+		if info and info.getterName and not info.excludeLines then
+			-- if TooltipHandlers[info.getterName] == nil then
+			-- 	print(info.getterName)
+			-- end
+			local handler = TooltipHandlers[info.getterName]
+			if handler then
+				handler(tooltip, unpack(info.getterArgs))
+			end
 		end
 	end
 end)

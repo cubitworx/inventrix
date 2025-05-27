@@ -10,14 +10,14 @@ FrameUtil.RegisterFrameForEvents(Inventorix, {
 
 Inventorix:SetScript("OnEvent", function(self, event, ...)
 	if event == "BANKFRAME_OPENED" then
-		InventorixService:UpdateBank()
+		InventorixInventory:UpdateBank()
 	elseif event == "BAG_UPDATE" then
-		InventorixService:UpdateContainer(...)
+		InventorixInventory:UpdateContainer(...)
 	elseif event == "PLAYER_ENTERING_WORLD" then
-		InventorixService:UpdateBags()
+		InventorixInventory:UpdateBags()
 	elseif event == "PLAYER_LOGIN" then
-		InventorixService:Init()
+		InventorixInventory:Init()
 	elseif event == "PLAYERBANKSLOTS_CHANGED" then
-		InventorixService:UpdateBank()
+		InventorixInventory:UpdateBank()
 	end
 end)
