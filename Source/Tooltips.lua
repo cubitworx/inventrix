@@ -10,34 +10,48 @@ local TooltipPlayerCount = function(player, itemCount)
 		.. " " .. valueColor:WrapTextInColorCode(itemCount)
 end
 
+local AddTooltipItemCountSection = function(tooltip, itemId, sectionTitle)
+	local totalCount = 0
+
+	-- Player
+	local tooltipLines = {}
+	for _, player in ipairs(InventorixPlayerRegistry.players) do
+		local itemCount = InventorixInventory:GetItemCountPlayer(player, itemId)
+		if itemCount > 0 then
+			totalCount = totalCount + itemCount
+			table.insert(tooltipLines, TooltipPlayerCount(player, itemCount))
+		end
+	end
+
+	-- Warband
+	local warbandCount = InventorixInventory:GetItemCountWarband(itemId)
+	totalCount = totalCount + warbandCount
+
+	tooltip:AddLine(" ")
+	tooltip:AddDoubleLine(sectionTitle, labelColor:WrapTextInColorCode("Total ") .. valueColor:WrapTextInColorCode(totalCount))
+	tooltip:AddDoubleLine(tooltipLines[1] or " ", labelColor:WrapTextInColorCode("Warband ") .. valueColor:WrapTextInColorCode(warbandCount))
+
+	for index, leftText in ipairs(tooltipLines) do
+		if index > 1 then
+			tooltip:AddDoubleLine(leftText, rightText)
+		end
+	end
+end
+
 local ShowTooltip = function(tooltip, itemLink)
 	if itemLink then
 		local itemId = tonumber(string.match(itemLink, "item:(%d+)"))
-		local totalCount = 0
+		local similarItems = InventorixInventory:GetSimilarItems(itemId)
 
-		tooltip:AddLine(" ")
+		AddTooltipItemCountSection(tooltip, itemId, "Inventory")
 
-		-- Add player & count to tooltip
-		local players = InventorixPlayerRegistry.players
-		for i = 1, #players, 2 do
-			local player1 = players[i]
-			local player2 = players[i + 1]
-			local itemCount1 = InventorixInventory:GetItemCountForPlayer(player1, itemId)
-			local itemCount2 = player2 and InventorixInventory:GetItemCountForPlayer(player2, itemId)
-			local leftText = TooltipPlayerCount(player1, itemCount1)
-			local rightText = player2 and TooltipPlayerCount(player2, itemCount2) or ""
-			totalCount = totalCount + itemCount1 + (itemCount2 or 0)
-
-			tooltip:AddDoubleLine(leftText, rightText)
+		if similarItems then
+			for rank, similarItemId in ipairs(similarItems) do
+				if similarItemId ~= itemId then
+					AddTooltipItemCountSection(tooltip, similarItemId, "Rank " .. rank)
+				end
+			end
 		end
-
-		local warbandCount = InventorixInventory:GetItemCountWarband(itemId)
-		totalCount = totalCount + warbandCount
-		-- Add warband & total to tooltip
-		tooltip:AddDoubleLine(
-			labelColor:WrapTextInColorCode("Warband ") .. valueColor:WrapTextInColorCode(warbandCount),
-			labelColor:WrapTextInColorCode("Total ") .. valueColor:WrapTextInColorCode(totalCount)
-		)
 
 		tooltip:Show()
 	end

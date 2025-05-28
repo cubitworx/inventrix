@@ -10,7 +10,11 @@ local debounce = {
 	updateContainer = {},
 }
 
-function InventorixInventory:GetItemCountForPlayer(player, itemId)
+function InventorixInventory:GetSimilarItems(itemId)
+	return INVENTORIX_REAGENTS_SIMILAR[Item:CreateFromItemID(itemId):GetItemName()]
+end
+
+function InventorixInventory:GetItemCountPlayer(player, itemId)
 	local itemCount = 0
 	local playerItems = self.playerItems[player.playerId]
 
