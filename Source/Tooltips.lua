@@ -1,6 +1,6 @@
 local TooltipHandlers = {}
 
-local labelColor = FRAMESTACK_FRAME_COLOR
+local warbandColor = FRAMESTACK_FRAME_COLOR
 local valueColor = WHITE_FONT_COLOR
 
 local TooltipPlayerCount = function(player, itemCount)
@@ -28,8 +28,8 @@ local AddTooltipItemCountSection = function(tooltip, itemId, sectionTitle)
 	totalCount = totalCount + warbandCount
 
 	tooltip:AddLine(" ")
-	tooltip:AddDoubleLine(sectionTitle, labelColor:WrapTextInColorCode("Total ") .. valueColor:WrapTextInColorCode(totalCount))
-	tooltip:AddDoubleLine(tooltipLines[1] or " ", labelColor:WrapTextInColorCode("Warband ") .. valueColor:WrapTextInColorCode(warbandCount))
+	tooltip:AddDoubleLine(sectionTitle, "Total " .. valueColor:WrapTextInColorCode(totalCount))
+	tooltip:AddDoubleLine(tooltipLines[1] or " ", warbandColor:WrapTextInColorCode("Warband ") .. valueColor:WrapTextInColorCode(warbandCount))
 
 	for index, leftText in ipairs(tooltipLines) do
 		if index > 1 then
