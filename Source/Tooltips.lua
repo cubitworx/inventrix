@@ -1,7 +1,8 @@
 local TooltipHandlers = {}
 
-local warbandColor = FRAMESTACK_FRAME_COLOR
+local reagentColor = WHITE_FONT_COLOR
 local valueColor = WHITE_FONT_COLOR
+local warbandColor = FRAMESTACK_FRAME_COLOR
 
 local TooltipPlayerCount = function(player, itemCount)
 	local classColor = C_ClassColor.GetClassColor(player.classFilename)
@@ -13,7 +14,7 @@ end
 local AddTooltipItemCountSection = function(tooltip, itemId, sectionTitle)
 	local totalCount = 0
 
-	-- Player
+	-- Players
 	local tooltipLines = {}
 	for _, player in ipairs(InventorixPlayerRegistry.players) do
 		local itemCount = InventorixInventory:GetItemCountPlayer(player, itemId)
@@ -38,6 +39,25 @@ local AddTooltipItemCountSection = function(tooltip, itemId, sectionTitle)
 	end
 end
 
+local AddTooltipRecipeCountSection = function(tooltip, reagents, sectionTitle)
+	local reagentCounts = {}
+
+	-- Players
+	for reagentId, reagentName in pairs(reagents) do
+		reagentCounts[reagentName] = reagentCounts[reagentName] or 0
+		for _, player in ipairs(InventorixPlayerRegistry.players) do
+			reagentCounts[reagentName] = reagentCounts[reagentName] + (InventorixInventory:GetItemCountPlayer(player, reagentId) or 0)
+		end
+	end
+
+	tooltip:AddLine(" ")
+	tooltip:AddLine(sectionTitle)
+
+	for reagentName, reagentCount in pairs(reagentCounts) do
+		tooltip:AddLine(reagentColor:WrapTextInColorCode(reagentName) .. " " .. valueColor:WrapTextInColorCode(reagentCount))
+	end
+end
+
 local ShowTooltip = function(tooltip, itemLink)
 	if itemLink then
 		local itemId = tonumber(string.match(itemLink, "item:(%d+)"))
@@ -57,6 +77,13 @@ local ShowTooltip = function(tooltip, itemLink)
 		if itemParts then
 			for partItemId, title in pairs(itemParts) do
 				AddTooltipItemCountSection(tooltip, partItemId, title)
+			end
+		end
+
+		local itemRecipes = InventorixInventory:GetItemRecipes(itemId)
+		if itemRecipes then
+			for title, reagents in pairs(itemRecipes) do
+				AddTooltipRecipeCountSection(tooltip, reagents, title)
 			end
 		end
 

@@ -18,6 +18,10 @@ function InventorixInventory:GetItemParts(itemId)
 	return INVENTORIX_REAGENT_PARTS[itemId]
 end
 
+function InventorixInventory:GetItemRecipes(itemId)
+	return INVENTORIX_TRADESKILL_RECIPES[itemId]
+end
+
 function InventorixInventory:GetItemCountPlayer(player, itemId)
 	local itemCount = 0
 	local playerItems = self.playerItems[player.playerId]
