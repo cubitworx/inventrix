@@ -41,15 +41,22 @@ end
 local ShowTooltip = function(tooltip, itemLink)
 	if itemLink then
 		local itemId = tonumber(string.match(itemLink, "item:(%d+)"))
-		local similarItems = InventorixInventory:GetSimilarItems(itemId)
 
 		AddTooltipItemCountSection(tooltip, itemId, "Inventory")
 
-		if similarItems then
-			for rank, similarItemId in ipairs(similarItems) do
+		local itemRanks = InventorixInventory:GetItemRanks(itemId)
+		if itemRanks then
+			for rank, similarItemId in ipairs(itemRanks) do
 				if similarItemId ~= itemId then
 					AddTooltipItemCountSection(tooltip, similarItemId, "Rank " .. rank)
 				end
+			end
+		end
+
+		local itemParts = InventorixInventory:GetItemParts(itemId)
+		if itemParts then
+			for partItemId, title in pairs(itemParts) do
+				AddTooltipItemCountSection(tooltip, partItemId, title)
 			end
 		end
 

@@ -10,8 +10,12 @@ local debounce = {
 	updateContainer = {},
 }
 
-function InventorixInventory:GetSimilarItems(itemId)
-	return INVENTORIX_REAGENTS_SIMILAR[Item:CreateFromItemID(itemId):GetItemName()]
+function InventorixInventory:GetItemRanks(itemId)
+	return INVENTORIX_REAGENT_RANKS[Item:CreateFromItemID(itemId):GetItemName()]
+end
+
+function InventorixInventory:GetItemParts(itemId)
+	return INVENTORIX_REAGENT_PARTS[itemId]
 end
 
 function InventorixInventory:GetItemCountPlayer(player, itemId)
