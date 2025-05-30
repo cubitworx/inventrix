@@ -1,193 +1,90 @@
-local TooltipHandlers = {}
+InventorixTooltip = {}
 
 local reagentColor = WHITE_FONT_COLOR
 local valueColor = WHITE_FONT_COLOR
 local warbandColor = FRAMESTACK_FRAME_COLOR
 
-local TooltipPlayerCount = function(player, itemCount)
+function InventorixTooltip:PlayerWithItemCount(player, itemCount)
 	local classColor = C_ClassColor.GetClassColor(player.classFilename)
 
 	return classColor:WrapTextInColorCode(player.playerName)
 		.. " " .. valueColor:WrapTextInColorCode(itemCount)
 end
 
-local AddTooltipItemCountSection = function(tooltip, itemId, sectionTitle)
+function InventorixTooltip:AddItemCountSection(tooltipLines, itemId, sectionTitle)
 	local totalCount = 0
 
+	table.insert(tooltipLines, {" "})
+	table.insert(tooltipLines, {sectionTitle})
+
 	-- Players
-	local tooltipLines = {}
 	for _, player in ipairs(CLIB_PlayerRegistry.players) do
-		local itemCount = InventorixInventory:GetItemCountPlayer(player, itemId)
+		local itemCount = CLIB_Inventory:GetItemCountPlayer(player, itemId)
 		if itemCount > 0 then
+			table.insert(tooltipLines, {self:PlayerWithItemCount(player, itemCount)})
 			totalCount = totalCount + itemCount
-			table.insert(tooltipLines, TooltipPlayerCount(player, itemCount))
 		end
 	end
 
 	-- Warband
-	local warbandCount = InventorixInventory:GetItemCountWarband(itemId)
+	local warbandCount = CLIB_Inventory:GetItemCountWarband(itemId)
 	totalCount = totalCount + warbandCount
 
-	tooltip:AddLine(" ")
-	tooltip:AddDoubleLine(sectionTitle, "Total " .. valueColor:WrapTextInColorCode(totalCount))
-	tooltip:AddDoubleLine(tooltipLines[1] or " ", warbandColor:WrapTextInColorCode("Warband ") .. valueColor:WrapTextInColorCode(warbandCount))
+	if #tooltipLines < 3 then
+		table.insert(tooltipLines, {" "})
+	end
 
-	for index, leftText in ipairs(tooltipLines) do
-		if index > 1 then
-			tooltip:AddDoubleLine(leftText, rightText)
+	tooltipLines[2][2] = "Total " .. valueColor:WrapTextInColorCode(totalCount)
+	tooltipLines[3][2] = warbandColor:WrapTextInColorCode("Warband ") .. valueColor:WrapTextInColorCode(warbandCount)
+end
+
+function InventorixTooltip:AddItemPartsSection(tooltipLines, itemId)
+	local itemParts = CLIB_Constants:GetItemParts(itemId)
+
+	if itemParts then
+		for partItemId, title in pairs(itemParts) do
+			self:AddItemCountSection(tooltipLines, partItemId, title)
 		end
 	end
 end
 
-local AddTooltipRecipeCountSection = function(tooltip, reagents, sectionTitle)
+function InventorixTooltip:AddItemRanksSection(tooltipLines, itemId)
+	local itemRanks = CLIB_Constants:GetItemRanks(itemId)
+
+	if itemRanks then
+		for rank, similarItemId in ipairs(itemRanks) do
+			if similarItemId ~= itemId then
+				self:AddItemCountSection(tooltipLines, similarItemId, "Rank " .. rank)
+			end
+		end
+	end
+end
+
+function InventorixTooltip:AddItemRecipesSection(tooltipLines, itemId)
+	local itemRecipes = CLIB_Constants:GetItemRecipes(itemId)
+
+	if itemRecipes then
+		for title, reagents in pairs(itemRecipes) do
+			self:AddRecipeCountSection(tooltipLines, reagents, title)
+		end
+	end
+end
+
+function InventorixTooltip:AddRecipeCountSection(tooltipLines,reagents, sectionTitle)
 	local reagentCounts = {}
+
+	table.insert(tooltipLines, {" "})
+	table.insert(tooltipLines, {sectionTitle})
 
 	-- Players
 	for reagentId, reagentName in pairs(reagents) do
 		reagentCounts[reagentName] = reagentCounts[reagentName] or 0
 		for _, player in ipairs(CLIB_PlayerRegistry.players) do
-			reagentCounts[reagentName] = reagentCounts[reagentName] + (InventorixInventory:GetItemCountPlayer(player, reagentId) or 0)
+			reagentCounts[reagentName] = reagentCounts[reagentName] + (CLIB_Inventory:GetItemCountPlayer(player, reagentId) or 0)
 		end
 	end
-
-	tooltip:AddLine(" ")
-	tooltip:AddLine(sectionTitle)
 
 	for reagentName, reagentCount in pairs(reagentCounts) do
-		tooltip:AddLine(reagentColor:WrapTextInColorCode(reagentName) .. " " .. valueColor:WrapTextInColorCode(reagentCount))
+		table.insert(tooltipLines, reagentColor:WrapTextInColorCode(reagentName) .. " " .. valueColor:WrapTextInColorCode(reagentCount))
 	end
 end
-
-local ShowTooltip = function(tooltip, itemLink)
-	if itemLink then
-		local itemId = tonumber(string.match(itemLink, "item:(%d+)"))
-
-		AddTooltipItemCountSection(tooltip, itemId, "Inventory")
-
-		local itemRanks = InventorixInventory:GetItemRanks(itemId)
-		if itemRanks then
-			for rank, similarItemId in ipairs(itemRanks) do
-				if similarItemId ~= itemId then
-					AddTooltipItemCountSection(tooltip, similarItemId, "Rank " .. rank)
-				end
-			end
-		end
-
-		local itemParts = InventorixInventory:GetItemParts(itemId)
-		if itemParts then
-			for partItemId, title in pairs(itemParts) do
-				AddTooltipItemCountSection(tooltip, partItemId, title)
-			end
-		end
-
-		local itemRecipes = InventorixInventory:GetItemRecipes(itemId)
-		if itemRecipes then
-			for title, reagents in pairs(itemRecipes) do
-				AddTooltipRecipeCountSection(tooltip, reagents, title)
-			end
-		end
-
-		tooltip:Show()
-	end
-end
-
--- Bags
-TooltipHandlers["GetBagItem"] = function(tooltip, bag, slot)
-	local itemLocation = ItemLocation:CreateFromBagAndSlot(bag, slot)
-
-	if C_Item.DoesItemExist(itemLocation) then
-		local itemLink = C_Item.GetItemLink(itemLocation);
-
-		ShowTooltip(tooltip, itemLink)
-	end
-end
-
--- Merchant (Buyback Pane)
-TooltipHandlers["GetBuybackItem"] = function(tooltip, slotIndex)
-	local itemLink = GetBuybackItemLink(slotIndex)
-
-	ShowTooltip(tooltip, itemLink)
-end
-
-TooltipHandlers["GetHyperlink"] = function (tooltip, itemLink)
-	ShowTooltip(tooltip, itemLink)
-end
-
--- Bank or bag in bag list
-TooltipHandlers["GetInventoryItem"] = function(tooltip, unit, slot)
-	local itemLink = GetInventoryItemLink(unit, slot)
-
-	ShowTooltip(tooltip, itemLink)
-end
-
-TooltipHandlers["GetItemKey"] = function(tooltip, itemId, itemLevel, itemSuffix)
-	local info = C_TooltipInfo and C_TooltipInfo.GetItemKey(itemId, itemLevel, itemSuffix)
-
-	if info then
-		local itemLink = info.hyperlink
-
-		if itemLink then
-			ShowTooltip(tooltip, itemLink)
-		end
-	end
-end
-
--- Merchant window (Merchant Pane)
-TooltipHandlers["GetMerchantItem"] = function(tooltip, index)
-	local itemLink = GetMerchantItemLink(index)
-
-	ShowTooltip(tooltip, itemLink)
-end
-
-TooltipHandlers["GetRecipeReagentItem"] = function(tooltip, recipeId, slotId )
-	local itemLink = C_TradeSkillUI.GetRecipeFixedReagentItemLink(recipeId, slotId)
-
-	local recipeLevel
-	if ProfessionsFrame and ProfessionsFrame.CraftingPage:IsVisible() then
-		recipeLevel = ProfessionsFrame.CraftingPage.SchematicForm:GetCurrentRecipeLevel()
-	elseif ProfessionsFrame and ProfessionsFrame.OrdersPage:IsVisible() then
-		recipeLevel =  ProfessionsFrame.OrdersPage.OrderView.OrderDetails.SchematicForm:GetCurrentRecipeLevel()
-	end
-
-	local schematic = C_TradeSkillUI.GetRecipeSchematic(recipeId, false, recipeLevel)
-
-	for _, reagentSlotSchematic in ipairs(schematic.reagentSlotSchematics) do
-		if reagentSlotSchematic.dataSlotIndex == slotId then
-			ShowTooltip(tooltip, itemLink)
-			break
-		end
-	end
-end
-
-TooltipHandlers["GetRecipeResultItem"] = function(tooltip, recipeId, reagents, allocations, _, qualityId)
-	local outputInfo = C_TradeSkillUI.GetRecipeOutputItemData(recipeId, reagents, allocations, qualityId)
-	local itemLink = outputInfo and outputInfo.hyperlink
-
-	if itemLink then
-		ShowTooltip(tooltip, itemLink)
-	end
-end
-
-local function ValidateTooltip(tooltip)
-	return tooltip == GameTooltip
-		or tooltip == GameTooltipTooltip
-		or tooltip == ItemRefTooltip
-		or tooltip == GarrisonShipyardMapMissionTooltipTooltip
-		or (not tooltip:IsForbidden()
-			and (tooltip:GetName() or ""):match("^NotGameTooltip"))
-end
-
-TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip)
-	if ValidateTooltip(tooltip) then
-		local info = tooltip.info or tooltip.processingInfo
-		if info and info.getterName and not info.excludeLines then
-			-- if TooltipHandlers[info.getterName] == nil then
-			-- 	print(info.getterName)
-			-- end
-			local handler = TooltipHandlers[info.getterName]
-			if handler then
-				handler(tooltip, unpack(info.getterArgs))
-			end
-		end
-	end
-end)

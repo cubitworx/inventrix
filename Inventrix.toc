@@ -1,16 +1,12 @@
 ## Interface: 110105
 ## Title: Inventorix
-## Notes: A lightweight addon that keeps track of what items you own across all characters
+## Notes: A lightweight addon that helps show information about a player's inventory across all characters
 ## Author: Ademeer
 ## Version: 11.1.0
-## Dependencies: CLIB_Player
-## SavedVariables: INVENTORIX_WARBAND_ITEM_STORE, INVENTORIX_PLAYER_ITEM_STORE
+## Dependencies: CLIB_Inventory, CLIB_Player
 
-Source\Constants\Bags.lua
-Source\Constants\ReagentParts.lua
-Source\Constants\ReagentRanks.lua
-Source\Constants\Recipes.lua
-
-Source\Inventory.lua
-Source\App.lua
 Source\Tooltips.lua
+
+Source\Hooks\BattlePetTooltipHooks.lua
+Source\Hooks\GenericTooltipHooks.lua
+## Source\Hooks\ProfessionsTooltipHooks.lua
