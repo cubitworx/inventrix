@@ -6,4 +6,11 @@
 ## Dependencies: CLIB_Player
 ## SavedVariables: INVENTORIX_WARBAND_ITEM_STORE, INVENTORIX_PLAYER_ITEM_STORE
 
-Source\Manifest.xml
+Source\Constants\Bags.lua
+Source\Constants\ReagentParts.lua
+Source\Constants\ReagentRanks.lua
+Source\Constants\Recipes.lua
+
+Source\Inventory.lua
+Source\App.lua
+Source\Tooltips.lua
