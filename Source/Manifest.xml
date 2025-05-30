@@ -1,7 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
   <Script file="Constants.lua" />
-  <Script file="Player.lua" />
-  <Script file="PlayerRegistry.lua" />
   <Script file="Inventory.lua" />
   <Script file="App.lua" />
   <Script file="Tooltips.lua" />

@@ -47,8 +47,6 @@ function InventorixInventory:Init()
 	self.warbandItems = INVENTORIX_WARBAND_ITEM_STORE or {}
 	self.playerItems = INVENTORIX_PLAYER_ITEM_STORE or {}
 	self.playerItems[currentPlayerId] = self.playerItems[currentPlayerId] or {}
-
-	InventorixPlayerRegistry:Init()
 end
 
 function InventorixInventory:PrintInventoryItem(containerIndex, slotIndex)

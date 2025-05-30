@@ -16,7 +16,7 @@ local AddTooltipItemCountSection = function(tooltip, itemId, sectionTitle)
 
 	-- Players
 	local tooltipLines = {}
-	for _, player in ipairs(InventorixPlayerRegistry.players) do
+	for _, player in ipairs(CLIB_PlayerRegistry.players) do
 		local itemCount = InventorixInventory:GetItemCountPlayer(player, itemId)
 		if itemCount > 0 then
 			totalCount = totalCount + itemCount
@@ -45,7 +45,7 @@ local AddTooltipRecipeCountSection = function(tooltip, reagents, sectionTitle)
 	-- Players
 	for reagentId, reagentName in pairs(reagents) do
 		reagentCounts[reagentName] = reagentCounts[reagentName] or 0
-		for _, player in ipairs(InventorixPlayerRegistry.players) do
+		for _, player in ipairs(CLIB_PlayerRegistry.players) do
 			reagentCounts[reagentName] = reagentCounts[reagentName] + (InventorixInventory:GetItemCountPlayer(player, reagentId) or 0)
 		end
 	end
@@ -143,9 +143,9 @@ TooltipHandlers["GetRecipeReagentItem"] = function(tooltip, recipeId, slotId )
 	local itemLink = C_TradeSkillUI.GetRecipeFixedReagentItemLink(recipeId, slotId)
 
 	local recipeLevel
-	if ProfessionsFrame.CraftingPage:IsVisible() then
+	if ProfessionsFrame and ProfessionsFrame.CraftingPage:IsVisible() then
 		recipeLevel = ProfessionsFrame.CraftingPage.SchematicForm:GetCurrentRecipeLevel()
-	elseif ProfessionsFrame.OrdersPage:IsVisible() then
+	elseif ProfessionsFrame and ProfessionsFrame.OrdersPage:IsVisible() then
 		recipeLevel =  ProfessionsFrame.OrdersPage.OrderView.OrderDetails.SchematicForm:GetCurrentRecipeLevel()
 	end
 

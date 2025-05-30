@@ -3,7 +3,7 @@
 ## Notes: A lightweight addon that keeps track of what items you own across all characters
 ## Author: Ademeer
 ## Version: 11.1.0
-## Category-enUS: Bags & Inventory
-## SavedVariables: INVENTORIX_WARBAND_ITEM_STORE, INVENTORIX_PLAYER_INFO_STORE, INVENTORIX_PLAYER_ITEM_STORE
+## Dependencies: CLIB_Player
+## SavedVariables: INVENTORIX_WARBAND_ITEM_STORE, INVENTORIX_PLAYER_ITEM_STORE
 
 Source\Manifest.xml
