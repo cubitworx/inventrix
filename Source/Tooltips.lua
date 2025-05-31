@@ -6,6 +6,11 @@ local silverIcon = "|TInterface\\MoneyFrame\\UI-SilverIcon:12:12:0:0|t"
 local reagentColor = BRIGHTBLUE_FONT_COLOR
 local valueColor = WHITE_FONT_COLOR
 local warbandColor = FRAMESTACK_FRAME_COLOR
+local rankIcons = {
+	[1] = C_Texture.GetCraftingReagentQualityChatIcon(1),
+	[2] = C_Texture.GetCraftingReagentQualityChatIcon(2),
+	[3] = C_Texture.GetCraftingReagentQualityChatIcon(3),
+}
 
 function InventorixTooltip:AddItemCountSection(tooltipLines, itemId, sectionTitle)
 	local totalCount = 0
@@ -14,25 +19,24 @@ function InventorixTooltip:AddItemCountSection(tooltipLines, itemId, sectionTitl
 	table.insert(tooltipLines, {sectionTitle})
 	local titleLineIndex = #tooltipLines
 
+	-- Warband
+	local warbandCount = CLIB_Inventory:GetItemCount(CLIB_Inventory:GetWarbandItems(), itemId)
+	totalCount = totalCount + warbandCount
+
+	table.insert(tooltipLines, {warbandColor:WrapTextInColorCode("Warband "), valueColor:WrapTextInColorCode(warbandCount)})
+
 	-- Players
 	for _, player in ipairs(CLIB_PlayerRegistry.players) do
-		local itemCount = CLIB_Inventory:GetItemCountPlayer(player, itemId)
+		local classColor = C_ClassColor.GetClassColor(player.classFilename)
+		local itemCount = CLIB_Inventory:GetItemCount(CLIB_Inventory:GetPlayerItems(player), itemId)
+
 		if itemCount > 0 then
-			table.insert(tooltipLines, {self:PlayerWithItemCount(player, itemCount)})
+			table.insert(tooltipLines, {classColor:WrapTextInColorCode(player.playerName), valueColor:WrapTextInColorCode(itemCount)})
 			totalCount = totalCount + itemCount
 		end
 	end
 
-	-- Warband
-	local warbandCount = CLIB_Inventory:GetItemCountWarband(itemId)
-	totalCount = totalCount + warbandCount
-
-	if not tooltipLines[titleLineIndex + 1] then
-		table.insert(tooltipLines, {" "})
-	end
-
-	tooltipLines[titleLineIndex][2] = "Total " .. valueColor:WrapTextInColorCode(totalCount)
-	tooltipLines[titleLineIndex + 1][2] = warbandColor:WrapTextInColorCode("Warband ") .. valueColor:WrapTextInColorCode(warbandCount)
+	tooltipLines[titleLineIndex][2] = valueColor:WrapTextInColorCode(totalCount)
 end
 
 function InventorixTooltip:AddItemPartsSection(tooltipLines, itemId)
@@ -46,12 +50,12 @@ function InventorixTooltip:AddItemPartsSection(tooltipLines, itemId)
 end
 
 function InventorixTooltip:AddItemRanksSection(tooltipLines, itemId)
-	local itemRanks = CLIB_Constants:GetItemRanks(itemId)
+	local itemRanks = CLIB_Constants:GetItemRanks(Item:CreateFromItemID(itemId):GetItemName())
 
 	if itemRanks then
-		for rank, similarItemId in ipairs(itemRanks) do
-			if similarItemId ~= itemId then
-				self:AddItemCountSection(tooltipLines, similarItemId, "Rank " .. rank)
+		for _, rankItemId in ipairs(itemRanks) do
+			if rankItemId ~= itemId then
+				self:AddItemCountSection(tooltipLines, rankItemId, self:GetItemNameWithRank(rankItemId))
 			end
 		end
 	end
@@ -65,13 +69,14 @@ function InventorixTooltip:AddItemRecipesSection(tooltipLines, itemId)
 			local reagentCounts = {}
 
 			table.insert(tooltipLines, {" "})
-			table.insert(tooltipLines, {recipe.title})
+			table.insert(tooltipLines, {recipe.title .. " " .. self:QuantityString(recipe.qty)})
 
 			-- Players
-			for reagentId, reagentName in pairs(recipe.reagents) do
-				reagentCounts[reagentName] = reagentCounts[reagentName] or 0
+			for _, reagent in ipairs(recipe.reagents) do
+				local reagentTitle = reagent.title .. " " .. self:QuantityString(reagent.qty)
+				reagentCounts[reagentTitle] = reagentCounts[reagentTitle] or 0
 				for _, player in ipairs(CLIB_PlayerRegistry.players) do
-					reagentCounts[reagentName] = reagentCounts[reagentName] + (CLIB_Inventory:GetItemCountPlayer(player, reagentId) or 0)
+					reagentCounts[reagentTitle] = reagentCounts[reagentTitle] + (CLIB_Inventory:GetItemCount(CLIB_Inventory:GetPlayerItems(player), reagent.id) or 0)
 				end
 			end
 
@@ -90,11 +95,10 @@ function InventorixTooltip:AddVendorPurchasePrice(tooltipLines, itemId)
 	end
 end
 
-function InventorixTooltip:PlayerWithItemCount(player, itemCount)
-	local classColor = C_ClassColor.GetClassColor(player.classFilename)
+function InventorixTooltip:GetItemNameWithRank(itemId)
+	local rank = C_TradeSkillUI.GetItemReagentQualityByItemInfo(itemId)
 
-	return classColor:WrapTextInColorCode(player.playerName)
-		.. " " .. valueColor:WrapTextInColorCode(itemCount)
+	return Item:CreateFromItemID(itemId):GetItemName() .. (rank and " " .. rankIcons[rank] or "")
 end
 
 function InventorixTooltip:MoneyString(amount)
@@ -123,4 +127,9 @@ function InventorixTooltip:MoneyString(amount)
 	end
 
 	return result
+end
+
+function InventorixTooltip:QuantityString(qty)
+	return (qty == 1) and ""
+		or (qty > 0 and "x" .. qty or "/" .. (1 / qty))
 end

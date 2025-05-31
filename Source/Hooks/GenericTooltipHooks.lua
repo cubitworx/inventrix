@@ -16,7 +16,7 @@ local ShowTooltip = function(tooltip, itemLink)
 		local tooltipLines = {}
 
 		InventorixTooltip:AddVendorPurchasePrice(tooltipLines, itemId)
-		InventorixTooltip:AddItemCountSection(tooltipLines, itemId, "Inventory")
+		InventorixTooltip:AddItemCountSection(tooltipLines, itemId, InventorixTooltip:GetItemNameWithRank(itemId))
 		InventorixTooltip:AddItemRanksSection(tooltipLines, itemId)
 		InventorixTooltip:AddItemPartsSection(tooltipLines, itemId)
 		InventorixTooltip:AddItemRecipesSection(tooltipLines, itemId)
