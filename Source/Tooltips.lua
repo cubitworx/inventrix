@@ -1,21 +1,18 @@
 InventorixTooltip = {}
 
-local reagentColor = WHITE_FONT_COLOR
+local copperIcon = "|TInterface\\MoneyFrame\\UI-CopperIcon:12:12:0:0|t"
+local goldIcon = "|TInterface\\MoneyFrame\\UI-GoldIcon:12:12:0:0|t"
+local silverIcon = "|TInterface\\MoneyFrame\\UI-SilverIcon:12:12:0:0|t"
+local reagentColor = BRIGHTBLUE_FONT_COLOR
 local valueColor = WHITE_FONT_COLOR
 local warbandColor = FRAMESTACK_FRAME_COLOR
-
-function InventorixTooltip:PlayerWithItemCount(player, itemCount)
-	local classColor = C_ClassColor.GetClassColor(player.classFilename)
-
-	return classColor:WrapTextInColorCode(player.playerName)
-		.. " " .. valueColor:WrapTextInColorCode(itemCount)
-end
 
 function InventorixTooltip:AddItemCountSection(tooltipLines, itemId, sectionTitle)
 	local totalCount = 0
 
 	table.insert(tooltipLines, {" "})
 	table.insert(tooltipLines, {sectionTitle})
+	local titleLineIndex = #tooltipLines
 
 	-- Players
 	for _, player in ipairs(CLIB_PlayerRegistry.players) do
@@ -30,12 +27,12 @@ function InventorixTooltip:AddItemCountSection(tooltipLines, itemId, sectionTitl
 	local warbandCount = CLIB_Inventory:GetItemCountWarband(itemId)
 	totalCount = totalCount + warbandCount
 
-	if #tooltipLines < 3 then
+	if not tooltipLines[titleLineIndex + 1] then
 		table.insert(tooltipLines, {" "})
 	end
 
-	tooltipLines[2][2] = "Total " .. valueColor:WrapTextInColorCode(totalCount)
-	tooltipLines[3][2] = warbandColor:WrapTextInColorCode("Warband ") .. valueColor:WrapTextInColorCode(warbandCount)
+	tooltipLines[titleLineIndex][2] = "Total " .. valueColor:WrapTextInColorCode(totalCount)
+	tooltipLines[titleLineIndex + 1][2] = warbandColor:WrapTextInColorCode("Warband ") .. valueColor:WrapTextInColorCode(warbandCount)
 end
 
 function InventorixTooltip:AddItemPartsSection(tooltipLines, itemId)
@@ -64,27 +61,66 @@ function InventorixTooltip:AddItemRecipesSection(tooltipLines, itemId)
 	local itemRecipes = CLIB_Constants:GetItemRecipes(itemId)
 
 	if itemRecipes then
-		for title, reagents in pairs(itemRecipes) do
-			self:AddRecipeCountSection(tooltipLines, reagents, title)
+		for _, recipe in pairs(itemRecipes) do
+			local reagentCounts = {}
+
+			table.insert(tooltipLines, {" "})
+			table.insert(tooltipLines, {recipe.title})
+
+			-- Players
+			for reagentId, reagentName in pairs(recipe.reagents) do
+				reagentCounts[reagentName] = reagentCounts[reagentName] or 0
+				for _, player in ipairs(CLIB_PlayerRegistry.players) do
+					reagentCounts[reagentName] = reagentCounts[reagentName] + (CLIB_Inventory:GetItemCountPlayer(player, reagentId) or 0)
+				end
+			end
+
+			for reagentName, reagentCount in pairs(reagentCounts) do
+				table.insert(tooltipLines, {reagentColor:WrapTextInColorCode(reagentName) .. " " .. valueColor:WrapTextInColorCode(reagentCount)})
+			end
 		end
 	end
 end
 
-function InventorixTooltip:AddRecipeCountSection(tooltipLines,reagents, sectionTitle)
-	local reagentCounts = {}
+function InventorixTooltip:AddVendorPurchasePrice(tooltipLines, itemId)
+	local vendorPurchasePrice = CLIB_Constants:GetVendorPurchasePrice(itemId)
 
-	table.insert(tooltipLines, {" "})
-	table.insert(tooltipLines, {sectionTitle})
+	if vendorPurchasePrice then
+		table.insert(tooltipLines, {vendorPurchasePrice["source"], valueColor:WrapTextInColorCode(self:MoneyString(vendorPurchasePrice["price"]))})
+	end
+end
 
-	-- Players
-	for reagentId, reagentName in pairs(reagents) do
-		reagentCounts[reagentName] = reagentCounts[reagentName] or 0
-		for _, player in ipairs(CLIB_PlayerRegistry.players) do
-			reagentCounts[reagentName] = reagentCounts[reagentName] + (CLIB_Inventory:GetItemCountPlayer(player, reagentId) or 0)
-		end
+function InventorixTooltip:PlayerWithItemCount(player, itemCount)
+	local classColor = C_ClassColor.GetClassColor(player.classFilename)
+
+	return classColor:WrapTextInColorCode(player.playerName)
+		.. " " .. valueColor:WrapTextInColorCode(itemCount)
+end
+
+function InventorixTooltip:MoneyString(amount)
+	amount = math.floor(amount)
+
+	local copper = amount % 100
+	local silver = (amount % 10000 - copper) / 100
+	local gold = (amount - silver * 100 - copper) / 10000
+
+	local result = copper .. " " .. copperIcon
+
+	if copper < 10 and (gold ~= 0 or silver ~= 0) then
+		result = "0" .. result
 	end
 
-	for reagentName, reagentCount in pairs(reagentCounts) do
-		table.insert(tooltipLines, reagentColor:WrapTextInColorCode(reagentName) .. " " .. valueColor:WrapTextInColorCode(reagentCount))
+	if silver ~= 0 or gold ~= 0 then
+		result = silver .. " " .. silverIcon .. " " .. result
 	end
+
+	if gold ~= 0 and silver < 10 then
+		result = "0" .. result
+	end
+
+	if gold ~= 0 then
+		result = gold .. " " .. goldIcon .. " " .. result
+	end
+
+	return result
 end

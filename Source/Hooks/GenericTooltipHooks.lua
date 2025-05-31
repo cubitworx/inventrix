@@ -15,6 +15,7 @@ local ShowTooltip = function(tooltip, itemLink)
 		local itemId = tonumber(string.match(itemLink, "item:(%d+)"))
 		local tooltipLines = {}
 
+		InventorixTooltip:AddVendorPurchasePrice(tooltipLines, itemId)
 		InventorixTooltip:AddItemCountSection(tooltipLines, itemId, "Inventory")
 		InventorixTooltip:AddItemRanksSection(tooltipLines, itemId)
 		InventorixTooltip:AddItemPartsSection(tooltipLines, itemId)
