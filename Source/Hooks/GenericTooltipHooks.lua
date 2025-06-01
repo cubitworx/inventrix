@@ -12,14 +12,13 @@ end
 
 local ShowTooltip = function(tooltip, itemLink)
 	if itemLink then
-		local itemId = tonumber(string.match(itemLink, "item:(%d+)"))
+		local item = Inventorix.Item:CreateFromItemLink(itemLink)
 		local tooltipLines = {}
 
-		InventorixTooltip:AddVendorPurchasePrice(tooltipLines, itemId)
-		InventorixTooltip:AddItemCountSection(tooltipLines, itemId, InventorixTooltip:GetItemNameWithRank(itemId))
-		InventorixTooltip:AddItemRanksSection(tooltipLines, itemId)
-		InventorixTooltip:AddItemPartsSection(tooltipLines, itemId)
-		InventorixTooltip:AddItemRecipesSection(tooltipLines, itemId)
+		Inventorix.Tooltip:AddVendorPurchasePrice(tooltipLines, item.itemId)
+		Inventorix.Tooltip:AddItemRanksSection(tooltipLines, item)
+		Inventorix.Tooltip:AddItemPartsSection(tooltipLines, item.itemId)
+		Inventorix.Tooltip:AddItemRecipesSection(tooltipLines, item.itemId)
 
 		AddTooltipLines(tooltip, tooltipLines)
 

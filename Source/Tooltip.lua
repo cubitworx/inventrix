@@ -1,4 +1,4 @@
-InventorixTooltip = {}
+Inventorix.Tooltip = {}
 
 local copperIcon = "|TInterface\\MoneyFrame\\UI-CopperIcon:12:12:0:0|t"
 local goldIcon = "|TInterface\\MoneyFrame\\UI-GoldIcon:12:12:0:0|t"
@@ -12,7 +12,7 @@ local rankIcons = {
 	[3] = C_Texture.GetCraftingReagentQualityChatIcon(3),
 }
 
-function InventorixTooltip:AddItemCountSection(tooltipLines, itemId, sectionTitle)
+function Inventorix.Tooltip:AddItemCountSection(tooltipLines, itemId, sectionTitle)
 	local totalCount = 0
 
 	table.insert(tooltipLines, {" "})
@@ -39,7 +39,16 @@ function InventorixTooltip:AddItemCountSection(tooltipLines, itemId, sectionTitl
 	tooltipLines[titleLineIndex][2] = valueColor:WrapTextInColorCode(totalCount)
 end
 
-function InventorixTooltip:AddItemPartsSection(tooltipLines, itemId)
+function Inventorix.Tooltip:AddItemRanksSection(tooltipLines, item)
+	local itemRanks = CLIB_Constants:GetItemRanks(item.itemName) or {item.itemId}
+
+	for _, rankItemId in ipairs(itemRanks) do
+		local rankItem = Inventorix.Item:CreateFromItemId(rankItemId)
+		self:AddItemCountSection(tooltipLines, rankItem.itemId, self:GetItemNameWithRank(rankItem))
+	end
+end
+
+function Inventorix.Tooltip:AddItemPartsSection(tooltipLines, itemId)
 	local itemParts = CLIB_Constants:GetItemParts(itemId)
 
 	if itemParts then
@@ -49,19 +58,7 @@ function InventorixTooltip:AddItemPartsSection(tooltipLines, itemId)
 	end
 end
 
-function InventorixTooltip:AddItemRanksSection(tooltipLines, itemId)
-	local itemRanks = CLIB_Constants:GetItemRanks(Item:CreateFromItemID(itemId):GetItemName())
-
-	if itemRanks then
-		for _, rankItemId in ipairs(itemRanks) do
-			if rankItemId ~= itemId then
-				self:AddItemCountSection(tooltipLines, rankItemId, self:GetItemNameWithRank(rankItemId))
-			end
-		end
-	end
-end
-
-function InventorixTooltip:AddItemRecipesSection(tooltipLines, itemId)
+function Inventorix.Tooltip:AddItemRecipesSection(tooltipLines, itemId)
 	local itemRecipes = CLIB_Constants:GetItemRecipes(itemId)
 
 	if itemRecipes then
@@ -87,7 +84,7 @@ function InventorixTooltip:AddItemRecipesSection(tooltipLines, itemId)
 	end
 end
 
-function InventorixTooltip:AddVendorPurchasePrice(tooltipLines, itemId)
+function Inventorix.Tooltip:AddVendorPurchasePrice(tooltipLines, itemId)
 	local vendorPurchasePrice = CLIB_Constants:GetVendorPurchasePrice(itemId)
 
 	if vendorPurchasePrice then
@@ -95,13 +92,19 @@ function InventorixTooltip:AddVendorPurchasePrice(tooltipLines, itemId)
 	end
 end
 
-function InventorixTooltip:GetItemNameWithRank(itemId)
-	local rank = C_TradeSkillUI.GetItemReagentQualityByItemInfo(itemId)
+function Inventorix.Tooltip:GetItemNameWithRank(item)
+	local rank = C_TradeSkillUI.GetItemReagentQualityByItemInfo(item.itemId)
 
-	return Item:CreateFromItemID(itemId):GetItemName() .. (rank and " " .. rankIcons[rank] or "")
+	if rank and not rankIcons[rank] then
+		print("not rankIcons[rank]", rank)
+	end
+
+	local rankSuffix = rank and (" " .. rankIcons[rank]) or ""
+
+	return item.itemName .. rankSuffix
 end
 
-function InventorixTooltip:MoneyString(amount)
+function Inventorix.Tooltip:MoneyString(amount)
 	amount = math.floor(amount)
 
 	local copper = amount % 100
@@ -129,7 +132,7 @@ function InventorixTooltip:MoneyString(amount)
 	return result
 end
 
-function InventorixTooltip:QuantityString(qty)
+function Inventorix.Tooltip:QuantityString(qty)
 	return (qty == 1) and ""
 		or (qty > 0 and "x" .. qty or "/" .. (1 / qty))
 end

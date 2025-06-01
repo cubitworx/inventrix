@@ -15,12 +15,11 @@ hooksecurefunc(_G, "BattlePetToolTip_Show",
 	function(speciesID, ...)
 		local tooltipLines = {}
 		local itemId = speciesID;
-		-- print(itemId)
+		-- print(item)
 
-		-- InventorixTooltip:AddItemCountSection(tooltipLines, itemId, "Inventory")
-		-- InventorixTooltip:AddItemRanksSection(tooltipLines, itemId)
-		-- InventorixTooltip:AddItemPartsSection(tooltipLines, itemId)
-		-- InventorixTooltip:AddItemRecipesSection(tooltipLines, itemId)
+		-- Inventorix.Tooltip:AddItemRanksSection(tooltipLines, item)
+		-- Inventorix.Tooltip:AddItemPartsSection(tooltipLines, item.itemId)
+		-- Inventorix.Tooltip:AddItemRecipesSection(tooltipLines, item.itemId)
 
 		-- AddTooltipLines(tooltipLines)
 	end

@@ -5,8 +5,10 @@
 ## Version: 11.1.0
 ## Dependencies: CLIB_Inventory, CLIB_Player
 
-Source\Tooltips.lua
+Source\Inventorix.lua
+Source\Item.lua
+Source\Tooltip.lua
 
 Source\Hooks\BattlePetTooltipHooks.lua
 Source\Hooks\GenericTooltipHooks.lua
-## Source\Hooks\ProfessionsTooltipHooks.lua
+Source\Hooks\ProfessionsTooltipHooks.lua
